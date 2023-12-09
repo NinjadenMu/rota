@@ -1,3 +1,6 @@
+import random
+
+
 NUM_SPOTS = 9
 
 ADJACENCY_MATRIX = [
@@ -67,9 +70,9 @@ def search(to_move, pieces, moves, depth, alpha, beta):
     result = check_for_win(pieces)
     if result:
         if result < 0:
-            return result - (depth / (depth + 2))
+            return result - (depth / 100)
 
-        return result + (depth / (depth + 2))
+        return result + (depth / 100)
 
     if depth == 0:
         return result
@@ -77,8 +80,8 @@ def search(to_move, pieces, moves, depth, alpha, beta):
     if not len(moves):
         return result
 
-    best_result = -3
-    worst_result = 3
+    best_result = -2
+    worst_result = 2
     for move in moves:
         make_move(to_move, pieces, move)
         to_move = not to_move
@@ -106,6 +109,20 @@ def search(to_move, pieces, moves, depth, alpha, beta):
 
     return worst_result
 
+def choose_move(to_move, results):
+    if not to_move:
+        best_result = max(results)
+
+    else:
+        best_result = min(results)
+
+    best_result_indices = []
+    for i, result in enumerate(results):
+        if result == best_result:
+            best_result_indices.append(i) 
+
+    return random.choice(best_result_indices)
+
 #print(search(to_move, pieces, get_legal_moves(to_move, pieces), 8, -1, 1))
 while not check_for_win(pieces):
     print(pieces)
@@ -114,13 +131,18 @@ while not check_for_win(pieces):
     results = []
 
     for move in moves:
-        results.append(search(to_move, pieces, [move], 7, -1, 1))
+        results.append(search(to_move, pieces, [move], 7, -2, 2))
+
+    results_low_depth= []
+    for move in moves:
+        results_low_depth.append(search(to_move, pieces, [move], 2, -2, 2))
 
     if not to_move:
-        make_move(to_move, pieces, moves[results.index(max(results))])
+        make_move(to_move, pieces, moves[choose_move(to_move, results)])
+        print(max(results))
 
     else:
-        make_move(to_move, pieces, moves[results.index(min(results))])
+        make_move(to_move, pieces, moves[choose_move(to_move, results)])
 
     to_move = not to_move
 
