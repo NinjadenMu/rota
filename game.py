@@ -17,21 +17,20 @@ ADJACENCY_MATRIX = [
 
 WINNING_COMBOS = [[0, 4, 8], [1, 5, 8], [2, 6, 8], [3, 7, 8]]
 
-pieces = [[-1, -1, -1], [-1, -1, -1]]
-
-to_move = 0
+pieces = [[-1, -1, 0], [-1, 1, 5]]
+to_move = 1
 
 
 def get_legal_moves(to_move, pieces):
     player_pieces = pieces[to_move]
 
     moves = []
-    all_tiles_placed = True
+
+    all_placed = True
 
     for i, start in enumerate(player_pieces):
-        if all_tiles_placed and start == -1:
-            all_tiles_placed = False
-
+        if all_placed and start == -1:
+            all_placed = False
             for stop in range(NUM_SPOTS):
                 if stop not in pieces[0] and stop not in pieces[1]:
                     moves.append((start, stop))
@@ -66,40 +65,55 @@ def make_move(to_move, pieces, move):
 def undo_move(to_move, pieces, move):
     pieces[to_move][pieces[to_move].index(move[1])] = move[0]
 
-def search(to_move, pieces, moves, depth, alpha, beta):
+def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -100, beta = 100):
     result = check_for_win(pieces)
     if result:
         if result < 0:
-            return result - (depth / 100)
+            result = result - depth
 
-        return result + (depth / 100)
+        else:
+            result = result + depth
+
+        return result
 
     if depth == 0:
         return result
+    
 
-    if not len(moves):
-        return result
-
-    best_result = -2
-    worst_result = 2
+    best_result = -100
+    worst_result = 100
     for move in moves:
         make_move(to_move, pieces, move)
         to_move = not to_move
 
         opp_moves = get_legal_moves(to_move, pieces)
-        result = search(to_move, pieces, opp_moves, depth - 1, alpha, beta)
+        child_pv = []
+
+        result = search(to_move, pieces, opp_moves, depth - 1, child_pv, visited, alpha, beta)
+
         best_result = max(result, best_result)
         worst_result = min(result, worst_result)
 
         to_move = not to_move
         undo_move(to_move, pieces, move)
 
+
         if not to_move:
+            if best_result > alpha and best_result < beta:
+                pv.clear()
+                pv.append(move)
+                pv += child_pv
+
             alpha = max(alpha, best_result)
             if beta <= alpha:
                 break
 
         else:
+            if worst_result > alpha and worst_result < beta:
+                pv.clear()
+                pv.append(move)
+                pv += child_pv
+                
             beta = min(beta, worst_result)
             if beta <= alpha:
                 break
@@ -109,73 +123,49 @@ def search(to_move, pieces, moves, depth, alpha, beta):
 
     return worst_result
 
-def choose_move(to_move, results):
-    if not to_move:
-        best_result = max(results)
 
-    else:
-        best_result = min(results)
+if __name__ == '__main__':
+    print(search(0, [[0, 6, 3], [1, 4, 7]], get_legal_moves(0, [[0, 6, 3], [1, 4, 7]]), 8, []))
+    while not check_for_win(pieces):
+        print(pieces)
 
-    best_result_indices = []
-    for i, result in enumerate(results):
-        if result == best_result:
-            best_result_indices.append(i) 
+        legal_moves = get_legal_moves(to_move, pieces)
+        if to_move:
+            while True:
+                try:
+                    print('Spots are numbered 0-8.  0-7 run clockwise along the outside circle.  8 is the center.  An unplaced spot can be represented as -1.')
+                    move = tuple(map(int, input('Please input your move in format {start spot}->{end spot}: ').split('->')))
 
-    return random.choice(best_result_indices)
+                    if move in legal_moves:
+                        break
 
-#print(search(to_move, pieces, get_legal_moves(to_move, pieces), 8, -1, 1))
-while not check_for_win(pieces):
-    print(pieces)
+                    else:
+                        print('Illegal Move!')
 
-    moves = get_legal_moves(to_move, pieces)
-    results = []
+                except:
+                    print('Invalid Input!')
 
-    for move in moves:
-        results.append(search(to_move, pieces, [move], 7, -2, 2))
+        else:
+            pv = []
+            result = search(to_move, pieces, legal_moves, 10, pv)
+            move = pv[0]
+            print(result)
+            print(pv)
 
-    results_low_depth= []
-    for move in moves:
-        results_low_depth.append(search(to_move, pieces, [move], 2, -2, 2))
+        make_move(to_move, pieces, move)
 
-    if not to_move:
-        make_move(to_move, pieces, moves[choose_move(to_move, results)])
-        print(max(results))
+        to_move = not to_move
 
-    else:
-        make_move(to_move, pieces, moves[choose_move(to_move, results)])
+    print(check_for_win(pieces))
+    print('Game Over!')
 
-    to_move = not to_move
+"""to_move = 0
+pieces = [[3, 1, 6], [4, 0, 7]]
+pv = []
 
+#pieces_hash = (''.join(list(map(str, sorted(pieces[0])))) + ''.join(list(map(str, sorted(pieces[1])))) + str(to_move)).ljust(13, '0')
+#print(pieces_hash)
 
-print(pieces)
-print(check_for_win(pieces))
-
-while not check_for_win(pieces):
-    print(pieces)
-
-    legal_moves = get_legal_moves(to_move, pieces)
-    if to_move == 0:
-        while True:
-            try:
-                print('Spots are numbered 0-8.  0-7 run clockwise along the outside circle.  8 is the center.  An unplaced spot can be represented as -1.')
-                move = tuple(map(int, input('Please input your move in format {start spot}->{end spot}: ').split('->')))
-
-                if move in legal_moves:
-                    break
-
-                else:
-                    print('Illegal Move!')
-
-            except:
-                print('Invalid Input!')
-
-    else:
-        move = legal_moves[0]
-
-    make_move(to_move, pieces, move)
-
-    to_move = not to_move
-
-print(check_for_win(pieces))
-print('Game Over!')
+print(search(to_move, pieces, get_legal_moves(to_move, pieces), 6, pv))
+print(pv)"""
 
