@@ -22,7 +22,9 @@ WINNING_COMBOS = [[0, 4, 8], [1, 5, 8], [2, 6, 8], [3, 7, 8]]
 pieces = [[-1, -1, -1], [-1, -1, -1]]
 to_move = 0
 
-model = rotanet.create_model()
+nn_eval = True
+if nn_eval:
+    model = rotanet.create_model()
 
 def get_legal_moves(to_move, pieces):
     player_pieces = pieces[to_move]
@@ -68,9 +70,16 @@ def make_move(to_move, pieces, move):
 def undo_move(to_move, pieces, move):
     pieces[to_move][pieces[to_move].index(move[1])] = move[0]
 
-def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -300, beta = 300):
+def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = -300, beta = 300):
+    pieces_hash = (''.join(list(map(str, sorted(pieces[0])))) + ''.join(list(map(str, sorted(pieces[1])))) + str(to_move)).ljust(13, '0')
+    if pieces_hash in transposition_table and transposition_table[pieces_hash][1]:
+        return 0
+    
     result = check_for_win(pieces)
+
     if result:
+        transposition_table[pieces_hash] = [result, 0]
+
         if result < 0:
             result = result - depth
 
@@ -80,20 +89,31 @@ def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -300, beta
         return result
 
     if depth == 0:
-        if to_move:
-            eval_pieces = [[], []]
-            temp = copy.copy(pieces[0])
-            eval_pieces[0] = copy.copy(pieces[1])
-            eval_pieces[1] = temp
+        if nn_eval:
+            if pieces_hash in transposition_table and transposition_table[pieces_hash] != 300:
+                result = transposition_table[pieces_hash][0]
 
-        else:
-            eval_pieces = pieces
+            else:
+                if to_move:
+                    eval_pieces = [[], []]
+                    temp = copy.copy(pieces[0])
+                    eval_pieces[0] = copy.copy(pieces[1])
+                    eval_pieces[1] = temp
 
-        inp = rotanet.encode_input(eval_pieces)
-        result = model(inp).item() - 0.5
+                else:
+                    eval_pieces = pieces
+
+                inp = rotanet.encode_input(eval_pieces)
+                result = model(inp).item() - 0.5
+
+        transposition_table[pieces_hash] = [result, 0]
 
         return result
     
+    if pieces_hash in transposition_table:
+        transposition_table[pieces_hash][1] = 1
+    else:
+        transposition_table[pieces_hash] = [300, 1]
 
     best_result = -300
     worst_result = 300
@@ -104,7 +124,7 @@ def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -300, beta
         opp_moves = get_legal_moves(to_move, pieces)
         child_pv = []
 
-        result = search(to_move, pieces, opp_moves, depth - 1, child_pv, visited, alpha, beta)
+        result = search(to_move, pieces, opp_moves, depth - 1, child_pv, transposition_table, alpha, beta)
 
         best_result = max(result, best_result)
         worst_result = min(result, worst_result)
@@ -121,6 +141,7 @@ def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -300, beta
 
             alpha = max(alpha, best_result)
             if beta <= alpha:
+                print(1)
                 break
 
         else:
@@ -131,7 +152,10 @@ def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -300, beta
                 
             beta = min(beta, worst_result)
             if beta <= alpha:
+                print(1)
                 break
+
+    transposition_table[pieces_hash][1] = 0
 
     if not to_move:
         return best_result
@@ -162,7 +186,11 @@ if __name__ == '__main__':
 
         else:
             pv = []
-            result = search(to_move, pieces, legal_moves, 3, pv)
+            depth = 9
+            if (pieces[0].count(-1) + pieces[1].count(-1)) > 4:
+                depth = 6
+            print(depth)
+            result = search(to_move, pieces, legal_moves, 5, pv)
             move = pv[0]
             print(result)
             print(pv)
