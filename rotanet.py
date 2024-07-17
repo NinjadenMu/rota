@@ -27,7 +27,7 @@ class RotaNet(nn.Module):
         x = torch.relu(x)
 
         x = self.output_layer(x)
-        x = torch.sigmoid(x)
+        x = torch.tanh(x)
   
         return x
 
@@ -42,4 +42,4 @@ if __name__ == '__main__':
     model = RotaNet()
     model.load_state_dict(torch.load('./weights.pt'))
 
-    print(model(encode_input([[-1, -1, 0], [1, 8, -1]])))
+    print(model(encode_input([[2, 5, 8], [7, 4, 3]])))

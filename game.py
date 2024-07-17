@@ -104,7 +104,7 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
                     eval_pieces = pieces
 
                 inp = rotanet.encode_input(eval_pieces)
-                result = model(inp).item() - 0.5
+                result = model(inp).item()
 
         if pieces_hash in transposition_table and transposition_table[pieces_hash][1] == 2:
             transposition_table[pieces_hash][0] = result
