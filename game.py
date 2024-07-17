@@ -73,7 +73,6 @@ def undo_move(to_move, pieces, move):
 def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = -300, beta = 300, root = False):
     pieces_hash = (''.join(list(map(str, sorted(pieces[0])))) + ''.join(list(map(str, sorted(pieces[1])))) + str(to_move)).ljust(13, '0')
     if pieces_hash in transposition_table and transposition_table[pieces_hash][1] and not root:
-        print(transposition_table[pieces_hash])
         return 0
     
     result = check_for_win(pieces)
