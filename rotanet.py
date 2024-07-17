@@ -15,9 +15,9 @@ def encode_input(pieces):
 class RotaNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.dl1 = nn.Linear(18, 16)
-        self.dl2 = nn.Linear(16, 16)
-        self.output_layer = nn.Linear(16, 1)
+        self.dl1 = nn.Linear(18, 14)
+        self.dl2 = nn.Linear(14, 14)
+        self.output_layer = nn.Linear(14, 1)
 
     def forward(self, x):
         x = self.dl1(x)
