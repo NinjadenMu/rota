@@ -70,9 +70,10 @@ def make_move(to_move, pieces, move):
 def undo_move(to_move, pieces, move):
     pieces[to_move][pieces[to_move].index(move[1])] = move[0]
 
-def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = -300, beta = 300):
+def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = -300, beta = 300, root = False):
     pieces_hash = (''.join(list(map(str, sorted(pieces[0])))) + ''.join(list(map(str, sorted(pieces[1])))) + str(to_move)).ljust(13, '0')
-    if pieces_hash in transposition_table and transposition_table[pieces_hash][1]:
+    if pieces_hash in transposition_table and transposition_table[pieces_hash][1] and not root:
+        print(transposition_table[pieces_hash])
         return 0
     
     result = check_for_win(pieces)
@@ -90,7 +91,7 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
 
     if depth == 0:
         if nn_eval:
-            if pieces_hash in transposition_table and transposition_table[pieces_hash] != 300:
+            if pieces_hash in transposition_table and transposition_table[pieces_hash][0] != 300:
                 result = transposition_table[pieces_hash][0]
 
             else:
@@ -106,12 +107,18 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
                 inp = rotanet.encode_input(eval_pieces)
                 result = model(inp).item() - 0.5
 
-        transposition_table[pieces_hash] = [result, 0]
+        if pieces_hash in transposition_table and transposition_table[pieces_hash][1] == 2:
+            transposition_table[pieces_hash][0] = result
+
+        else:
+            transposition_table[pieces_hash] = [result, 0]
 
         return result
     
     if pieces_hash in transposition_table:
-        transposition_table[pieces_hash][1] = 1
+        if transposition_table[pieces_hash][1] != 2:
+            transposition_table[pieces_hash][1] = 1
+
     else:
         transposition_table[pieces_hash] = [300, 1]
 
@@ -132,7 +139,6 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
         to_move = not to_move
         undo_move(to_move, pieces, move)
 
-
         if not to_move:
             if best_result > alpha and best_result < beta:
                 pv.clear()
@@ -141,7 +147,6 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
 
             alpha = max(alpha, best_result)
             if beta <= alpha:
-                print(1)
                 break
 
         else:
@@ -152,10 +157,10 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
                 
             beta = min(beta, worst_result)
             if beta <= alpha:
-                print(1)
                 break
 
-    transposition_table[pieces_hash][1] = 0
+    if transposition_table[pieces_hash][1] != 2:
+        transposition_table[pieces_hash][1] = 0
 
     if not to_move:
         return best_result
@@ -164,7 +169,10 @@ def search(to_move, pieces, moves, depth, pv, transposition_table = {}, alpha = 
 
 
 if __name__ == '__main__':
-    #print(search(0, [[0, 6, 3], [1, 4, 7]], get_legal_moves(0, [[0, 6, 3], [1, 4, 7]]), 8, []))
+    #print(search(0, [[0, 6, 3], [1, 4, 7]], get_legal_moves(0, [[0, 6, 3], [1, 4, 7]]), 8, [])
+    game_history = []
+    transposition_table = {}
+
     while not check_for_win(pieces):
         print(pieces)
 
@@ -189,15 +197,21 @@ if __name__ == '__main__':
             depth = 9
             if (pieces[0].count(-1) + pieces[1].count(-1)) > 4:
                 depth = 6
-            print(depth)
-            result = search(to_move, pieces, legal_moves, 5, pv)
+
+            result = search(to_move, pieces, legal_moves, 5, pv, transposition_table, root = True)
             move = pv[0]
             print(result)
             print(pv)
 
         make_move(to_move, pieces, move)
-
         to_move = not to_move
+
+        pieces_hash = (''.join(list(map(str, sorted(pieces[0])))) + ''.join(list(map(str, sorted(pieces[1])))) + str(to_move)).ljust(13, '0')
+        game_history.append(pieces_hash)
+        transposition_table = {}
+
+        for hash in game_history:
+            transposition_table[hash] = [300, 2]
 
     print(check_for_win(pieces))
     print('Game Over!')
