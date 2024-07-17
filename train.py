@@ -4,6 +4,8 @@ import torch.optim as optim
 
 import random
 import copy
+import pickle
+import os
 
 import game
 
@@ -34,6 +36,7 @@ def sample_game(pieces, moves_in):
 def generate_data():
     data = []
     while len(data) < 1000:
+        print(len(data))
         pieces1 = [[-1, -1, -1], [-1, -1, -1]]
         pieces2 = [[-1, -1, -1], [-1, -1, -1]]
 
@@ -60,7 +63,14 @@ def loss_func(reward1, reward2, elem):
     return -torch.log(torch.sigmoid(reward1 - reward2))
 
 def train():
-    data = generate_data()
+    if os.path.exists('./data.pkl'):
+        with open('./data.pkl', 'rb') as f:
+            data = pickle.load(f)
+
+    else:
+        data = generate_data()
+        with open('./data.pkl', 'wb') as f:
+            pickle.dump(data, f)
 
     model = RotaNet()
 
@@ -68,6 +78,7 @@ def train():
     losses = []
 
     for epoch in range(50):
+        print(epoch)
         for elem in data:
             optimizer.zero_grad()
 
@@ -79,12 +90,15 @@ def train():
             
             loss = loss_func(reward1, reward2, elem)
             loss.backward()
-            losses.append(loss.item())
+            #losses.append(loss.item())
+            if epoch == 49:
+                losses.append(loss.item())
             
             optimizer.step()
 
-    print(model(torch.tensor(encode_input([[5, 6, 8], [3, 4, 7]]))))
-    print(model(torch.tensor(encode_input([[0, 6, 3], [1, 4, 7]]))))
+    #print(model(torch.tensor(encode_input([[5, 6, 8], [3, 4, 7]]))))
+    #print(model(torch.tensor(encode_input([[0, 6, 3], [1, 4, 7]]))))
+    print(sum(losses)/len(losses))
     torch.save(model.state_dict(), './weights.pt')
     
     return model
