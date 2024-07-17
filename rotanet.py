@@ -30,7 +30,13 @@ class RotaNet(nn.Module):
         x = torch.sigmoid(x)
   
         return x
-    
+
+
+def create_model():
+    model = RotaNet()
+    model.load_state_dict(torch.load('./weights.pt'))
+    return model
+
 
 if __name__ == '__main__':
     model = RotaNet()

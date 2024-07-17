@@ -1,4 +1,6 @@
 import random
+import rotanet
+import copy
 
 
 NUM_SPOTS = 9
@@ -17,9 +19,10 @@ ADJACENCY_MATRIX = [
 
 WINNING_COMBOS = [[0, 4, 8], [1, 5, 8], [2, 6, 8], [3, 7, 8]]
 
-pieces = [[-1, -1, 0], [-1, 1, 5]]
-to_move = 1
+pieces = [[-1, -1, -1], [-1, -1, -1]]
+to_move = 0
 
+model = rotanet.create_model()
 
 def get_legal_moves(to_move, pieces):
     player_pieces = pieces[to_move]
@@ -51,11 +54,11 @@ def check_for_win(pieces):
 
     if pieces[0][-1] == 8:
         if pieces[0] in WINNING_COMBOS:
-            return 1
+            return 100
 
     if pieces[1][-1] == 8:
         if pieces[1] in WINNING_COMBOS:
-            return -1
+            return -100
 
     return 0
 
@@ -65,7 +68,7 @@ def make_move(to_move, pieces, move):
 def undo_move(to_move, pieces, move):
     pieces[to_move][pieces[to_move].index(move[1])] = move[0]
 
-def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -100, beta = 100):
+def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -300, beta = 300):
     result = check_for_win(pieces)
     if result:
         if result < 0:
@@ -77,11 +80,23 @@ def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -100, beta
         return result
 
     if depth == 0:
+        if to_move:
+            eval_pieces = [[], []]
+            temp = copy.copy(pieces[0])
+            eval_pieces[0] = copy.copy(pieces[1])
+            eval_pieces[1] = temp
+
+        else:
+            eval_pieces = pieces
+
+        inp = rotanet.encode_input(eval_pieces)
+        result = model(inp).item() - 0.5
+
         return result
     
 
-    best_result = -100
-    worst_result = 100
+    best_result = -300
+    worst_result = 300
     for move in moves:
         make_move(to_move, pieces, move)
         to_move = not to_move
@@ -125,12 +140,12 @@ def search(to_move, pieces, moves, depth, pv, visited = None, alpha = -100, beta
 
 
 if __name__ == '__main__':
-    print(search(0, [[0, 6, 3], [1, 4, 7]], get_legal_moves(0, [[0, 6, 3], [1, 4, 7]]), 8, []))
+    #print(search(0, [[0, 6, 3], [1, 4, 7]], get_legal_moves(0, [[0, 6, 3], [1, 4, 7]]), 8, []))
     while not check_for_win(pieces):
         print(pieces)
 
         legal_moves = get_legal_moves(to_move, pieces)
-        if to_move:
+        if not to_move:
             while True:
                 try:
                     print('Spots are numbered 0-8.  0-7 run clockwise along the outside circle.  8 is the center.  An unplaced spot can be represented as -1.')
@@ -147,7 +162,7 @@ if __name__ == '__main__':
 
         else:
             pv = []
-            result = search(to_move, pieces, legal_moves, 10, pv)
+            result = search(to_move, pieces, legal_moves, 3, pv)
             move = pv[0]
             print(result)
             print(pv)
