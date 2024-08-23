@@ -1,7 +1,7 @@
 # Rota AI
 Rota, or Roman Tic-Tac-Toe, is a game played on a circular board with 8 spots evenly distributed around the circumference of the circle and one spot in the middle.  Each player has 3 pieces, and they take turns placing down their pieces on unoccupied spots of their choice at the start of the game.  Once all 6 pieces are placed, players may slide their pieces to any unoccupied adjacent spot (there are 3 adjacent spots: the 2 spots surrounding the spot the piece is currently in, and the center).  The objective of the game is to move all 3 pieces such that they're collinear (one piece will have to be in the center).  This seemingly simple rule set, unlike Tic-Tac-Toe, actually leads to fairly interesting and difficult gameplay.  For example, the side that occupies the center spot typically has an advantage, but if the other side can "trap" the center-holding player's other 2 pieces, that player will be forced to vacate the center.  
 
-Here's a good video explaing Rota, since I'm sure I didn't do a great job: [](https://www.youtube.com/watch?v=Z6jS9vu7P1M)
+Here's a good video explaing Rota, since I'm sure I didn't do a great job: [https://www.youtube.com/watch?v=Z6jS9vu7P1M](https://www.youtube.com/watch?v=Z6jS9vu7P1M)
 
 I'm fairly certain Rota is a tie if played perfectly - the players should be able to make moves forever while preventing the other side from winning.  Although this rule isn't in the original ruleset, I added a rule to keep games from lasting forever: if a position is repeated twice, the game ends in a draw (another word for tie).  This rule is inspired by chess' threefold-repetition rule.
 
