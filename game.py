@@ -1,7 +1,8 @@
 import random
-import rotanet
+import os
 import copy
 
+import rotanet
 
 NUM_SPOTS = 9
 
@@ -25,6 +26,7 @@ to_move = 0
 nn_eval = True
 if nn_eval:
     model = rotanet.create_model()
+
 
 def get_legal_moves(to_move, pieces):
     player_pieces = pieces[to_move]
@@ -173,14 +175,17 @@ if __name__ == '__main__':
     transposition_table = {}
 
     while not check_for_win(pieces):
-        print(pieces)
+        print('Your Piece Locations:')
+        print(pieces[0])
+        print("AI Piece Locations:")
+        print(pieces[1])
 
         legal_moves = get_legal_moves(to_move, pieces)
         if not to_move:
             while True:
                 try:
-                    print('Spots are numbered 0-8.  0-7 run clockwise along the outside circle.  8 is the center.  An unplaced spot can be represented as -1.')
-                    move = tuple(map(int, input('Please input your move in format {start spot}->{end spot}: ').split('->')))
+                    print('Spots are numbered 0-8 (or -1 if a piece is unplaced).  0-7 run clockwise along the outside circle, starting from 12 o\'clock.  8 is the center.  An unplaced spot can be represented as -1.')
+                    move = tuple(map(int, input('Please input your move in format {start spot}->{end spot} (ex. 1->8): ').split('->')))
 
                     if move in legal_moves:
                         break
@@ -199,8 +204,10 @@ if __name__ == '__main__':
 
             result = search(to_move, pieces, legal_moves, 5, pv, transposition_table, root = True)
             move = pv[0]
-            print(result)
-            print(pv)
+
+        os.system('clear')
+
+        print(f'AI Move: {move[0]}->{move[1]}')
 
         make_move(to_move, pieces, move)
         to_move = not to_move
@@ -212,16 +219,9 @@ if __name__ == '__main__':
         for hash in game_history:
             transposition_table[hash] = [300, 2]
 
-    print(check_for_win(pieces))
+    if check_for_win(pieces) == 1:
+        print('You Win!')
+    elif check_for_win(pieces) == -1:
+        print('AI Wins!')
+
     print('Game Over!')
-
-"""to_move = 0
-pieces = [[3, 1, 6], [4, 0, 7]]
-pv = []
-
-#pieces_hash = (''.join(list(map(str, sorted(pieces[0])))) + ''.join(list(map(str, sorted(pieces[1])))) + str(to_move)).ljust(13, '0')
-#print(pieces_hash)
-
-print(search(to_move, pieces, get_legal_moves(to_move, pieces), 6, pv))
-print(pv)"""
-
