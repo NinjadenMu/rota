@@ -22,4 +22,4 @@ To resolve these issues, I train a neural network to evaluate how close to winni
 The game rules and search are implemented in game.py (this should probably be modularized).  I've included a pkl file for the generated data, and the trained neural network weights.  **Please play the game by running game.py!**
 
 ## TODO
-I also actually implemented code to get the principal variation (PV) in search - this is unnecessary for the engine in it's current state, but it means I can extend the engine to use iterative deepening in it's search in the future. 
+I also actually implemented code to get the principal variation (PV) in search - this is unnecessary for the engine in it's current state, but it means I can extend the engine to use iterative deepening in its search in the future. 
